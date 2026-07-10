@@ -129,10 +129,19 @@ export const kaaRequest = async <T>(
   throw lastError || new Error('Unknown upstream error');
 };
 
-/** Build a full poster/thumbnail URL from a KAA image key. */
+/** Build a full poster URL from a KAA image key. */
 export const imageUrl = (img?: KaaImage): string | null => {
   const key = img?.hq || img?.sm;
   return key ? `${config.imageBase}/${key}.webp` : null;
+};
+
+// Episode thumbnails are served from /image/thumbnail (not /image/poster).
+const THUMB_BASE = config.imageBase.replace(/\/poster$/, '/thumbnail');
+
+/** Build a full episode-thumbnail URL from a KAA image key. */
+export const thumbUrl = (img?: KaaImage): string | null => {
+  const key = img?.hq || img?.sm;
+  return key ? `${THUMB_BASE}/${key}.webp` : null;
 };
 
 const toDuration = (seconds?: number): string | null =>
@@ -284,7 +293,7 @@ export const mapEpisodes = (slug: string, epList: KaaEpisode[]) => ({
     episodeNumber: ep.episode_number,
     id: `ep-${ep.episode_number}-${ep.slug}`,
     isFiller: false,
-    thumbnail: imageUrl(ep.thumbnail),
+    thumbnail: thumbUrl(ep.thumbnail),
   })),
 });
 
