@@ -27,19 +27,35 @@ const episodeSourcesController = async (c: Context) => {
 
   if (info.servers.length < 1) throw new NotFoundError('no servers available for this episode');
 
-  const server = serverQuery
+  // Preferred server first (if requested), then the rest as fallbacks.
+  const preferred = serverQuery
     ? info.servers.find(
         s =>
           s.name.toLowerCase() === serverQuery.toLowerCase() ||
           s.shortName.toLowerCase() === serverQuery.toLowerCase() ||
           s.src.toLowerCase().includes(serverQuery.toLowerCase())
-      ) || info.servers[0]
-    : info.servers[0];
+      )
+    : undefined;
+  const ordered = preferred
+    ? [preferred, ...info.servers.filter(s => s !== preferred)]
+    : info.servers;
 
-  const stream = await kaa.resolveStream(server.src);
+  // Try each server until one resolves to a playable source.
+  let server = ordered[0];
+  let stream = await kaa.resolveStream(server.src).catch(() => null);
+  if (!stream || stream.sources.length < 1) {
+    for (const next of ordered.slice(1)) {
+      const s = await kaa.resolveStream(next.src).catch(() => null);
+      if (s && s.sources.length > 0) {
+        server = next;
+        stream = s;
+        break;
+      }
+    }
+  }
 
-  if (stream.sources.length < 1) {
-    throw new NotFoundError('could not resolve a playable source for this server');
+  if (!stream || stream.sources.length < 1) {
+    throw new NotFoundError('could not resolve a playable source for this episode');
   }
 
   // Wrap upstream URLs through our media proxy so they play cross-origin
