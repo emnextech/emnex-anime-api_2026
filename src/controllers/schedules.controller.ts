@@ -1,21 +1,18 @@
 import { Context } from 'hono';
-import config from '../config/config';
 import { validationError } from '../utils/errors';
-import { extractSchedule, ScheduledAnime } from '../extractor/extractSchedule';
-import { axiosInstance } from '../services/axiosInstance';
+import { ScheduledAnime } from '../extractor/extractSchedule';
 
 export interface ScheduleResponse {
-  success: boolean;
-  data: {
-    [date: string]: ScheduledAnime[];
-  };
+  [date: string]: ScheduledAnime[];
 }
 
+// KickAssAnime does not expose an airing schedule feed, so we return the
+// standard 7-day map with empty day buckets (no upstream calls to make).
+// The handler adds the { success, data } envelope, so we return the map directly.
 async function schedulesController(c: Context): Promise<ScheduleResponse> {
-  const today = new Date();
   const dateParam = c.req.query('date');
 
-  let startDate = today;
+  let startDate = new Date();
   if (dateParam) {
     const [year, month, day] = dateParam.split('-').map(Number);
     startDate = new Date(year, month - 1, day);
@@ -24,61 +21,17 @@ async function schedulesController(c: Context): Promise<ScheduleResponse> {
     }
   }
 
-  const dates: string[] = [];
+  const data: { [date: string]: ScheduledAnime[] } = {};
   for (let i = 0; i < 7; i++) {
     const d = new Date(startDate);
     d.setDate(startDate.getDate() + i);
-    const year = d.getFullYear();
-    const month = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    dates.push(`${year}-${month}-${day}`);
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(
+      d.getDate()
+    ).padStart(2, '0')}`;
+    data[key] = [];
   }
 
-  try {
-    const promises = dates.map(async date => {
-      const ajaxUrl = `/ajax/schedule/list?tzOffset=-330&date=${date}`;
-      try {
-        const result = await axiosInstance(ajaxUrl, {
-          headers: { Referer: `${config.baseurl}/home` },
-        });
-
-        if (!result.success || !result.data) {
-          throw new Error(result.message || 'Failed to fetch');
-        }
-
-        const jsonData = JSON.parse(result.data);
-        return {
-          date,
-          shows: extractSchedule(jsonData.html),
-        };
-      } catch (err: unknown) {
-        const errorMessage = err instanceof Error ? err.message : 'Unknown error';
-        console.error(`Failed to fetch schedule for ${date}: ${errorMessage}`);
-        return {
-          date,
-          shows: [] as ScheduledAnime[],
-          error: 'Failed to fetch',
-        };
-      }
-    });
-
-    const results = await Promise.all(promises);
-
-    // Format response to map dates to shows
-    const response: { [date: string]: ScheduledAnime[] } = {};
-    results.forEach(result => {
-      response[result.date] = result.shows;
-    });
-
-    return {
-      success: true,
-      data: response,
-    };
-  } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    console.error(errorMessage);
-    throw new validationError('Failed to fetch schedules');
-  }
+  return data;
 }
 
 export default schedulesController;

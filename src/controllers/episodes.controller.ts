@@ -1,29 +1,23 @@
 import { Context } from 'hono';
-import config from '../config/config';
-import { validationError } from '../utils/errors';
-import { extractEpisodes, Episode } from '../extractor/extractEpisodes';
-import { axiosInstance } from '../services/axiosInstance';
+import * as kaa from '../services/kaa';
+import { NotFoundError, validationError } from '../utils/errors';
 
-const episodesController = async (c: Context): Promise<Episode[]> => {
+const episodesController = async (c: Context) => {
   const id = c.req.param('id');
+  const locale = kaa.langToLocale(c.req.query('lang')); // ?lang=sub (default) | dub
 
   if (!id) throw new validationError('id is required');
 
-  const idNum = id.split('-').at(-1);
-  const ajaxUrl = `/ajax/v2/episode/list/${idNum}`;
-
-  const result = await axiosInstance(ajaxUrl, {
-    headers: { Referer: `${config.baseurl}/watch/${id}` },
-  });
-
-  if (!result.success || !result.data) {
-    throw new validationError(result.message || 'make sure the id is correct', {
-      validIdEX: 'one-piece-100',
-    });
+  let epList: kaa.KaaEpisode[];
+  try {
+    epList = await kaa.episodes(id, locale);
+  } catch {
+    throw new validationError('make sure the id is correct', { validIdEX: 'naruto-f3cf' });
   }
 
-  const response = extractEpisodes(result.data);
-  return response;
+  if (epList.length < 1) throw new NotFoundError('no episodes found');
+
+  return kaa.mapEpisodes(id, epList);
 };
 
 export default episodesController;

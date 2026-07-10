@@ -1,33 +1,15 @@
 import { Context } from 'hono';
-import { axiosInstance } from '../services/axiosInstance';
+import * as kaa from '../services/kaa';
 import { validationError } from '../utils/errors';
-import * as cheerio from 'cheerio';
 
-const randomController = async (_c: Context): Promise<{ id: string }> => {
-  console.log('Fetching random anime...');
-  const result = await axiosInstance('/home');
+const randomController = async (_c?: Context): Promise<{ id: string }> => {
+  const page = Math.floor(Math.random() * 20) + 1;
+  const { result } = await kaa.popular(page);
 
-  if (!result.success || !result.data) {
-    console.error('Random anime fetch failed:', result.message);
-    throw new validationError(result.message || 'Failed to fetch homepage for random selection');
-  }
+  if (result.length === 0) throw new validationError('No anime found');
 
-  const $ = cheerio.load(result.data);
-
-  const animes: string[] = [];
-  $('.flw-item').each((i, el) => {
-    const link = $(el).find('.film-name .dynamic-name').attr('href');
-    const id = link?.split('/').pop();
-    if (id) animes.push(id);
-  });
-
-  if (animes.length === 0) {
-    throw new validationError('No anime found');
-  }
-
-  const randomId = animes[Math.floor(Math.random() * animes.length)];
-
-  return { id: randomId };
+  const random = result[Math.floor(Math.random() * result.length)];
+  return { id: random.slug };
 };
 
 export default randomController;

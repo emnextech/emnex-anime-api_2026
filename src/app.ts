@@ -1,6 +1,6 @@
 import { Hono, Context } from 'hono';
 import { cors } from 'hono/cors';
-import hiAnimeRoutes from './routes/routes';
+import apiRoutes from './routes/routes';
 import { AppError } from './utils/errors';
 import { fail } from './utils/response';
 import { logger } from 'hono/logger';
@@ -41,7 +41,7 @@ app.get('/favicon.ico', (c: Context) => {
   return c.body(null, 204);
 });
 
-app.route('/api/v2', hiAnimeRoutes);
+app.route('/api/v2', apiRoutes);
 app.onError((err, c) => {
   if (err instanceof AppError) {
     return fail(c, err.message, err.statusCode, err.details);

@@ -1,15 +1,18 @@
 const config = {
-  baseurl: 'https://aniwatchtv.to',
-  baseurl2: 'https://aniwatchtv.to',
+  // Upstream data source (JSON API).
+  baseurl: 'https://kaa.lt',
+  baseurl2: 'https://kaa.lt',
+  imageBase: 'https://kaa.lt/image/poster',
   origin: '*',
   port: 5000,
 
   headers: {
-    'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:122.0) Gecko/20100101 Firefox/122.0',
+    'User-Agent':
+      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0 Safari/537.36',
   },
 
   logLevel: 'INFO',
-  enableLogging: false,
+  enableLogging: true,
   isProduction: true,
   isDevelopment: false,
   isVercel: false,

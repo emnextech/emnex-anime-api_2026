@@ -1,18 +1,15 @@
 import { Context } from 'hono';
-import { axiosInstance } from '../services/axiosInstance';
-import { validationError } from '../utils/errors';
-import { extractTopSearch, TopSearchAnime } from '../extractor/extractTopSearch';
+import * as kaa from '../services/kaa';
+import { TopSearchAnime } from '../extractor/extractTopSearch';
 
-const topSearchController = async (_c: Context): Promise<TopSearchAnime[]> => {
-  console.log('Fetching top search data from external API...');
-  const result = await axiosInstance('/');
+const topSearchController = async (_c?: Context): Promise<TopSearchAnime[]> => {
+  const { result } = await kaa.popular(1);
 
-  if (!result.success || !result.data) {
-    console.error('Top search fetch failed:', result.message);
-    throw new validationError(result.message || 'Failed to fetch top search');
-  }
-
-  return extractTopSearch(result.data);
+  return result.slice(0, 10).map(show => ({
+    title: show.title_en || show.title || null,
+    link: `/anime/${show.slug}`,
+    id: show.slug,
+  }));
 };
 
 export default topSearchController;

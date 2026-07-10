@@ -17,6 +17,9 @@ import newsController from '../controllers/news.controller';
 import randomController from '../controllers/random.controller';
 import schedulesController from '../controllers/schedules.controller';
 import topSearchController from '../controllers/topSearch.controller';
+import episodeServersController from '../controllers/episodeServers.controller';
+import episodeSourcesController from '../controllers/episodeSources.controller';
+import proxyController from '../controllers/proxy.controller';
 
 const router = new Hono();
 
@@ -36,6 +39,9 @@ router.get('/suggestion', handler(suggestionController));
 router.get('/characters/:id', handler(charactersController));
 router.get('/character/:id', handler(characterDetailConroller));
 router.get('/episodes/:id', handler(episodesController));
+router.get('/episode/servers', handler(episodeServersController));
+router.get('/episode/sources', handler(episodeSourcesController));
+router.get('/proxy', proxyController);
 router.get('/genres', handler(allGenresController));
 router.get('/news', handler(newsController));
 router.get('/random', handler(randomController));

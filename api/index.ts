@@ -2,7 +2,7 @@ import { Hono } from 'hono';
 import { handle } from 'hono/vercel';
 import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
-import hiAnimeRoutes from '../src/routes/routes';
+import apiRoutes from '../src/routes/routes';
 import config from '../src/config/config';
 import { AppError } from '../src/utils/errors';
 import { fail } from '../src/utils/response';
@@ -43,7 +43,7 @@ app.get('/ping', (c) => {
 });
 
 // Routes
-app.route('/api/v2', hiAnimeRoutes);
+app.route('/api/v2', apiRoutes);
 
 // Error Handling
 app.onError((err, c) => {

@@ -3,7 +3,7 @@
   "configVersion": 1,
   "workspaces": {
     "": {
-      "name": "4animo",
+      "name": "emnex-anime-api",
       "dependencies": {
         "@hono/node-server": "^1.8.2",
         "axios": "^1.13.6",

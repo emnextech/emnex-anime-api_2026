@@ -1,32 +1,23 @@
 import { Context } from 'hono';
-import config from '../config/config';
+import * as kaa from '../services/kaa';
 import { validationError } from '../utils/errors';
-import { extractSuggestions, Suggestion } from '../extractor/extractSuggestions';
-import { axiosInstance } from '../services/axiosInstance';
 
-const suggestionController = async (c: Context): Promise<Suggestion[]> => {
+const suggestionController = async (c: Context) => {
   const keyword = c.req.query('keyword') || null;
 
   if (!keyword) throw new validationError('query is required');
 
-  const noSpaceKeyword = keyword.trim().toLowerCase().replace(/\s+/g, '+');
-  const endpoint = `/ajax/search/suggest?keyword=${noSpaceKeyword}`;
+  const results = await kaa.search(keyword.trim());
 
-  const result = await axiosInstance(endpoint, {
-    headers: { Referer: `${config.baseurl}/home` },
-  });
-
-  if (!result.success || !result.data) {
-    throw new validationError(result.message || 'suggestion not found');
-  }
-
-  // Parse HTML from JSON if necessary, or just use result.data if it's already HTML
-  // In hianime API, suggestion ajax usually returns JSON with { status, html }
-  // but my axiosInstance returns response.text() which is the raw JSON string.
-  const jsonData = JSON.parse(result.data);
-  const response = extractSuggestions(jsonData.html);
-
-  return response;
+  return results.slice(0, 8).map(show => ({
+    title: show.title_en || show.title || null,
+    alternativeTitle: show.title || null,
+    poster: kaa.imageUrl(show.poster),
+    id: show.slug,
+    aired: show.start_date ? show.start_date.split('T')[0] : null,
+    type: show.type ? show.type.toUpperCase() : null,
+    duration: null,
+  }));
 };
 
 export default suggestionController;

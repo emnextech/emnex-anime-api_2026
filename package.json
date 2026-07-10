@@ -1,15 +1,18 @@
 {
-  "name": "hianime-v2",
-  "version": "2.2.0",
+  "name": "emnex-anime-api",
+  "version": "3.0.0",
+  "description": "Emnex Anime API — a RESTful anime data & streaming API by emnex Tech.",
+  "author": "emnex Tech",
+  "license": "MIT",
   "type": "module",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/ryanwtf7/hianime-api.git"
+    "url": "git+https://github.com/emnextech/emnex-anime-api.git"
   },
   "bugs": {
-    "url": "https://github.com/ryanwtf7/hianime-api/issues"
+    "url": "https://github.com/emnextech/emnex-anime-api/issues"
   },
-  "homepage": "https://github.com/ryanwtf7/hianime-api#readme",
+  "homepage": "https://github.com/emnextech/emnex-anime-api#readme",
   "scripts": {
     "dev": "bun run --hot index.ts",
     "start": "bun index.ts",
