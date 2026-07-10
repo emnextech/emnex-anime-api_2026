@@ -99,7 +99,7 @@ describe('Controllers Comprehensive Suite (Jest)', () => {
   it('schedulesController should return schedules', async () => {
     mockSuccess(JSON.stringify({ html: mockHtmlData.schedule }));
     const result = await schedulesController(createMockContext());
-    expect(result.data).toBeDefined();
+    expect(Array.isArray(result)).toBe(true);
   });
 
   it('newsController should return news items', async () => {
