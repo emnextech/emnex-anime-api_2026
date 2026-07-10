@@ -275,3 +275,13 @@ bun run test         # vitest
 If you find this project useful, consider giving it a star ⭐
 
 Made with ❤️ by **emnex Tech**.
+
+---
+
+## Acknowledgments
+
+A heartfelt thank you to **RY4N**, whose original open-source anime API project
+laid the very first foundation that this work grew from. Emnex Anime API has
+since been substantially rebuilt — new data source, streaming pipeline, media
+proxy, and more — but none of it would exist without that initial spark.
+Thank you for starting it. 🙏
