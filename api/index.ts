@@ -10,10 +10,10 @@ import { fail } from '../src/utils/response';
 const app = new Hono();
 
 // CORS Configuration
-const origins = config.origin.includes(',')
-  ? config.origin.split(',').map(o => o.trim())
-  : config.origin === '*'
-    ? '*'
+const origins = config.origin === '*'
+  ? '*'
+  : Array.isArray(config.origin)
+    ? config.origin
     : [config.origin];
 
 app.use(
@@ -24,7 +24,7 @@ app.use(
     allowHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
     exposeHeaders: ['Content-Length', 'X-Request-Id'],
     maxAge: 600,
-    credentials: true,
+    credentials: origins !== '*',
   })
 );
 
@@ -38,7 +38,7 @@ app.get('/ping', (c) => {
   return c.json({
     status: 'ok',
     timestamp: new Date().toISOString(),
-    environment: 'vercel',
+    environment: config.isVercel ? 'vercel' : 'self-hosted',
   });
 });
 

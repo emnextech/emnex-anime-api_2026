@@ -101,6 +101,11 @@ Runtime configuration lives in [`src/config/config.ts`](src/config/config.ts):
 | `imageBase` | Poster/thumbnail CDN base | `https://kaa.lt/image/poster` |
 | `port` | Port the server listens on | `5000` |
 | `origin` | Allowed CORS origin(s), comma-separated or `*` | `*` |
+| `BASE_URL` | Override the upstream data source | `https://kaa.lt` |
+| `IMAGE_BASE` | Override the poster CDN base | `https://kaa.lt/image/poster` |
+| `CORS_ORIGIN` | Override the allowed CORS origin(s) | `*` |
+| `ENABLE_LOGGING` | Enable or disable request logging | `true` |
+| `NODE_ENV` | Controls production detection | `development` or `production` |
 | `enableLogging` | Log every request to stdout | `true` |
 | `isProduction` | Production mode flag | `true` |
 
@@ -120,7 +125,10 @@ docker run -p 5000:5000 emnex-anime-api
 1. Fork/clone this repository to your GitHub account.
 2. Import the project at [vercel.com](https://vercel.com).
 3. Deploy. The included [`vercel.json`](vercel.json) routes all traffic to the
-   serverless entry point.
+  serverless entry point and the default build script produces the API bundle
+  that Vercel expects.
+4. Keep the GitHub integration enabled so every push to `main` triggers an
+  automatic redeploy.
 
 ---
 
@@ -256,6 +264,7 @@ HLS player:
 ```bash
 bun run dev          # hot-reload dev server
 bun start            # production start
+bun run build:bun    # local Bun bundle build
 bun run type-check   # tsc --noEmit
 bun run lint         # eslint --fix
 bun run format       # prettier --write

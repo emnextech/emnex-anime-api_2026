@@ -7,10 +7,10 @@ import { logger } from 'hono/logger';
 import config from './config/config';
 
 const app = new Hono();
-const origins = config.origin.includes(',')
-  ? config.origin.split(',').map(o => o.trim())
-  : config.origin === '*'
-    ? '*'
+const origins = config.origin === '*'
+  ? '*'
+  : Array.isArray(config.origin)
+    ? config.origin
     : [config.origin];
 
 app.use(
@@ -21,7 +21,7 @@ app.use(
     allowHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
     exposeHeaders: ['Content-Length', 'X-Request-Id'],
     maxAge: 600,
-    credentials: true,
+    credentials: origins !== '*',
   })
 );
 
