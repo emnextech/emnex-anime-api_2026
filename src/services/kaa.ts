@@ -206,6 +206,37 @@ export const catalogue = async (
 export const detail = async (slug: string): Promise<KaaShow> =>
   kaaRequest<KaaShow>(`/api/show/${slug}`);
 
+interface KaaScheduleEntry {
+  title: string;
+  title_en?: string;
+  slug: string;
+  poster?: KaaImage;
+  ts: number; // airing time (ms epoch)
+}
+
+export interface ScheduleItem {
+  id: string;
+  title: string | null;
+  jname: string | null;
+  poster: string | null;
+  airingAt: number;
+}
+
+/** GET /api/schedule — upcoming airings (flat, sorted by airing time). */
+export const schedule = async (): Promise<ScheduleItem[]> => {
+  const data = await kaaRequest<KaaScheduleEntry[]>('/api/schedule');
+  return (Array.isArray(data) ? data : [])
+    .filter(e => e && e.slug && typeof e.ts === 'number')
+    .map(e => ({
+      id: e.slug,
+      title: e.title_en || e.title || null,
+      jname: e.title || null,
+      poster: imageUrl(e.poster),
+      airingAt: e.ts,
+    }))
+    .sort((a, b) => a.airingAt - b.airingAt);
+};
+
 /** GET /api/show/:slug/episodes — all episodes (walks every page). */
 export const episodes = async (slug: string, locale = 'ja-JP'): Promise<KaaEpisode[]> => {
   const first = await kaaRequest<{
