@@ -1,6 +1,6 @@
 import { Context } from 'hono';
 import * as kaa from '../services/kaa';
-import { NotFoundError, validationError } from '../utils/errors';
+import { validationError } from '../utils/errors';
 
 const episodesController = async (c: Context) => {
   const id = c.req.param('id');
@@ -15,8 +15,9 @@ const episodesController = async (c: Context) => {
     throw new validationError('make sure the id is correct', { validIdEX: 'naruto-f3cf' });
   }
 
-  if (epList.length < 1) throw new NotFoundError('no episodes found');
-
+  // A title with no episodes for this language (e.g. movies/specials the upstream
+  // has no stream for) is a valid, non-error state — return an empty list (200)
+  // so clients can render a graceful "not available" message instead of an error.
   return kaa.mapEpisodes(id, epList);
 };
 
