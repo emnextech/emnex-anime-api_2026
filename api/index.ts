@@ -1,5 +1,4 @@
 import { Hono } from 'hono';
-import { handle } from 'hono/vercel';
 import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
 import apiRoutes from '../src/routes/routes';
@@ -59,4 +58,4 @@ app.notFound((c) => {
   return fail(c, 'Route not found', 404);
 });
 
-export default handle(app);
+export default app;
