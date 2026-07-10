@@ -1,0 +1,8 @@
+[build]
+builder = "NIXPACKS"
+
+[deploy]
+startCommand = "bun dist/index.js"
+healthcheckPath = "/ping"
+healthcheckTimeout = 300
+restartPolicyType = "ON_FAILURE"
