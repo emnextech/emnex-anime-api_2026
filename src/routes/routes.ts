@@ -21,6 +21,18 @@ import topSearchController from '../controllers/topSearch.controller';
 import episodeServersController from '../controllers/episodeServers.controller';
 import episodeSourcesController from '../controllers/episodeSources.controller';
 import proxyController from '../controllers/proxy.controller';
+import {
+  mangaHomeController,
+  mangaSearchController,
+  mangaInfoController,
+  mangaReadController,
+  mangaRecentController,
+  mangaNewController,
+  mangaTrendingController,
+  mangaBrowseController,
+  mangaGenresController,
+  mangaImageController,
+} from '../controllers/manga.controller';
 
 const router = new Hono();
 
@@ -44,6 +56,19 @@ router.get('/episode/servers', handler(episodeServersController));
 router.get('/episode/sources', handler(episodeSourcesController));
 router.get('/proxy', proxyController);
 router.get('/genres', handler(allGenresController));
+
+// Manga (single-API: manga lives alongside anime)
+router.get('/manga/home', handler(mangaHomeController));
+router.get('/manga/search', handler(mangaSearchController));
+router.get('/manga/info', handler(mangaInfoController));
+router.get('/manga/read', handler(mangaReadController));
+router.get('/manga/recent', handler(mangaRecentController));
+router.get('/manga/new', handler(mangaNewController));
+router.get('/manga/trending', handler(mangaTrendingController));
+router.get('/manga/browse', handler(mangaBrowseController));
+router.get('/manga/genres', handler(mangaGenresController));
+router.get('/manga/image', mangaImageController);
+
 router.get('/news', handler(newsController));
 router.get('/trailers', handler(trailersController));
 router.get('/random', handler(randomController));
