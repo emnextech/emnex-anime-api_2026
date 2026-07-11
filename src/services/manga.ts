@@ -313,18 +313,60 @@ const refererFor = (imageUrl: string): string => {
 export interface ProxiedImage {
   body: ArrayBuffer;
   contentType: string;
+  cached?: boolean;
 }
 
-/** Fetch a manga CDN image with the correct referer so hotlink protection passes. */
+// In-memory LRU-ish cache so repeat reads (and other users) are instant and we
+// don't re-hammer the origin CDN. Cap keeps memory bounded on small instances.
+const IMAGE_TTL = 60 * 60 * 1000; // 1 hour
+const MAX_IMAGE_CACHE = 150;
+const IMAGE_TIMEOUT = 20000;
+const imageCache = new Map<string, { at: number; body: ArrayBuffer; contentType: string }>();
+
+const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
+
+/**
+ * Fetch a manga CDN image with the correct referer (hotlink protection) plus
+ * caching and retries — the origin CDN is flaky under load, so a single miss
+ * shouldn't 502 the page.
+ */
 export const proxyImage = async (imageUrl: string): Promise<ProxiedImage> => {
-  const res = await fetch(imageUrl, {
-    headers: {
-      Accept: 'image/webp,image/avif,image/*,*/*;q=0.8',
-      'User-Agent': DEFAULT_HEADERS['User-Agent'],
-      Referer: refererFor(imageUrl),
-    },
-    signal: AbortSignal.timeout(FETCH_TIMEOUT),
-  });
-  if (!res.ok) throw new Error(`Image fetch ${res.status}`);
-  return { body: await res.arrayBuffer(), contentType: res.headers.get('Content-Type') || 'image/jpeg' };
+  const hit = imageCache.get(imageUrl);
+  if (hit && Date.now() - hit.at < IMAGE_TTL) {
+    // refresh LRU position
+    imageCache.delete(imageUrl);
+    imageCache.set(imageUrl, hit);
+    return { body: hit.body, contentType: hit.contentType, cached: true };
+  }
+
+  let lastError: unknown;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      if (attempt > 0) await sleep(300 * attempt);
+      const res = await fetch(imageUrl, {
+        headers: {
+          Accept: 'image/webp,image/avif,image/*,*/*;q=0.8',
+          'User-Agent': DEFAULT_HEADERS['User-Agent'],
+          Referer: refererFor(imageUrl),
+        },
+        signal: AbortSignal.timeout(IMAGE_TIMEOUT),
+      });
+      if (!res.ok) {
+        lastError = new Error(`Image fetch ${res.status}`);
+        continue;
+      }
+      const body = await res.arrayBuffer();
+      const contentType = res.headers.get('Content-Type') || 'image/jpeg';
+
+      if (imageCache.size >= MAX_IMAGE_CACHE) {
+        const oldest = imageCache.keys().next().value;
+        if (oldest) imageCache.delete(oldest);
+      }
+      imageCache.set(imageUrl, { at: Date.now(), body, contentType });
+      return { body, contentType };
+    } catch (err) {
+      lastError = err;
+    }
+  }
+  throw lastError || new Error('Image fetch failed');
 };
