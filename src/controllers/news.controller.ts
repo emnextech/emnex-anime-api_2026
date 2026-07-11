@@ -1,9 +1,18 @@
 import { Context } from 'hono';
-import { NewsResponse } from '../extractor/extractNews';
+import { getNews, getNewsByTitle, NewsItem } from '../services/news';
 
-// KickAssAnime does not expose a news feed; return a valid empty payload.
-const newsController = async (_c?: Context): Promise<NewsResponse> => {
-  return { news: [], total: 0 };
+interface NewsPayload {
+  news: NewsItem[];
+  total: number;
+}
+
+/** GET /news — aggregated latest anime news (ANN + Crunchyroll). */
+const newsController = async (c: Context): Promise<NewsPayload> => {
+  const limit = Math.min(Number(c.req.query('limit')) || 40, 60);
+  const title = c.req.query('title');
+
+  const news = title ? await getNewsByTitle(title, limit) : await getNews(limit);
+  return { news, total: news.length };
 };
 
 export default newsController;

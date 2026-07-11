@@ -14,6 +14,7 @@ import nextEpisodeScheduleController from '../controllers/nextEpisodeSchedule.co
 import filterController from '../controllers/filter.controller';
 import filterOptions from '../utils/filter';
 import newsController from '../controllers/news.controller';
+import trailersController from '../controllers/trailers.controller';
 import randomController from '../controllers/random.controller';
 import schedulesController from '../controllers/schedules.controller';
 import topSearchController from '../controllers/topSearch.controller';
@@ -44,6 +45,7 @@ router.get('/episode/sources', handler(episodeSourcesController));
 router.get('/proxy', proxyController);
 router.get('/genres', handler(allGenresController));
 router.get('/news', handler(newsController));
+router.get('/trailers', handler(trailersController));
 router.get('/random', handler(randomController));
 
 export default router;
