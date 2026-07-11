@@ -144,6 +144,15 @@ export const thumbUrl = (img?: KaaImage): string | null => {
   return key ? `${THUMB_BASE}/${key}.webp` : null;
 };
 
+// Wide banner art is served from /image/banner.
+const BANNER_BASE = config.imageBase.replace(/\/poster$/, '/banner');
+
+/** Build a full banner URL from a KAA image key. */
+export const bannerUrl = (img?: KaaImage): string | null => {
+  const key = img?.hq || img?.sm;
+  return key ? `${BANNER_BASE}/${key}.webp` : null;
+};
+
 const toDuration = (seconds?: number): string | null =>
   seconds ? `${Math.round(seconds / 60)}m` : null;
 
@@ -375,6 +384,7 @@ export const mapDetail = (show: KaaShow, epList: KaaEpisode[]): DetailAnime => {
     japanese: show.title_original || show.title || null,
     id: show.slug,
     poster: imageUrl(show.poster),
+    banner: bannerUrl(show.banner),
     rating: show.rating || null,
     is18Plus: show.rating === 'R+' || show.rating === 'Rx',
     type: show.type ? show.type.toUpperCase() : null,

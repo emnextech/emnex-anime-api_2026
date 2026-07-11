@@ -57,6 +57,7 @@ export interface Season {
 
 export interface DetailAnime extends AnimeFeatured {
   japanese: string | null;
+  banner: string | null;
   rating: string | null;
   is18Plus: boolean;
   synopsis: string | null;
