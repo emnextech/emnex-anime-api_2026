@@ -41,6 +41,13 @@ const listpageController = async (c: Context): Promise<ListPageResponse> => {
     throw new validationError(`category is required for query ${query}`);
   }
 
+  // A–Z browse: `category` carries the letter (A–Z, "0-9", or "other"/"all").
+  if (query === 'az-list') {
+    const { result, totalPages } = await kaa.azList(category || 'all', page);
+    if (result.length < 1) throw new NotFoundError();
+    return kaa.toListPage(result, page, totalPages);
+  }
+
   const { result, totalPages } = popularQueries.has(query)
     ? await kaa.popular(page)
     : await kaa.catalogue(page);

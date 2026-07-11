@@ -202,6 +202,94 @@ export const catalogue = async (
   return { result: data.result || [], totalPages: data.maxPage || 1 };
 };
 
+// ---------------------------------------------------------------------------
+// A–Z browse
+//
+// KAA exposes no native "titles starting with X" endpoint, so we build an
+// in-memory index of the whole catalogue once (cached for a few hours) and then
+// filter + paginate it locally. The upstream is only walked on the first request
+// after the cache expires, in small parallel batches.
+// ---------------------------------------------------------------------------
+const CATALOGUE_TTL = 6 * 60 * 60 * 1000; // 6 hours
+const CATALOGUE_PAGE_CAP = 200; // safety cap on pages to walk
+const CATALOGUE_CONCURRENCY = 8;
+
+let catalogueCache: { at: number; shows: KaaShow[] } | null = null;
+let cataloguePromise: Promise<KaaShow[]> | null = null;
+
+const fetchAllCatalogue = async (): Promise<KaaShow[]> => {
+  const first = await kaaRequest<{ result: KaaShow[]; maxPage: number }>('/api/anime?page=1');
+  const shows = [...(first.result || [])];
+  const maxPage = Math.min(first.maxPage || 1, CATALOGUE_PAGE_CAP);
+
+  const pages: number[] = [];
+  for (let p = 2; p <= maxPage; p++) pages.push(p);
+
+  for (let i = 0; i < pages.length; i += CATALOGUE_CONCURRENCY) {
+    const batch = pages.slice(i, i + CATALOGUE_CONCURRENCY);
+    const results = await Promise.all(
+      batch.map(p =>
+        kaaRequest<{ result: KaaShow[] }>(`/api/anime?page=${p}`)
+          .then(d => d.result || [])
+          .catch(() => [] as KaaShow[])
+      )
+    );
+    for (const r of results) shows.push(...r);
+  }
+  return shows;
+};
+
+const getCatalogue = async (): Promise<KaaShow[]> => {
+  if (catalogueCache && Date.now() - catalogueCache.at < CATALOGUE_TTL) {
+    return catalogueCache.shows;
+  }
+  if (!cataloguePromise) {
+    cataloguePromise = fetchAllCatalogue()
+      .then(shows => {
+        catalogueCache = { at: Date.now(), shows };
+        cataloguePromise = null;
+        return shows;
+      })
+      .catch(err => {
+        cataloguePromise = null;
+        throw err;
+      });
+  }
+  return cataloguePromise;
+};
+
+/** Bucket a show under a single A–Z / 0-9 / # (other) key by its display title. */
+const letterBucket = (show: KaaShow): string => {
+  const c = (show.title_en || show.title || '').trim().charAt(0).toUpperCase();
+  if (c >= '0' && c <= '9') return '0-9';
+  if (c >= 'A' && c <= 'Z') return c;
+  return '#';
+};
+
+/** A–Z browse: titles whose first character matches `letter`, sorted & paginated. */
+export const azList = async (
+  letter: string,
+  page: number,
+  perPage = 30
+): Promise<{ result: KaaShow[]; totalPages: number }> => {
+  const shows = await getCatalogue();
+  const key = (letter || 'all').toUpperCase();
+  const normalized = key === 'OTHER' ? '#' : key;
+
+  const filtered =
+    normalized === 'ALL' || normalized === ''
+      ? shows
+      : shows.filter(s => letterBucket(s) === normalized);
+
+  filtered.sort((a, b) =>
+    (a.title_en || a.title || '').localeCompare(b.title_en || b.title || '')
+  );
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / perPage));
+  const start = (page - 1) * perPage;
+  return { result: filtered.slice(start, start + perPage), totalPages };
+};
+
 /** GET /api/show/:slug — full detail for one anime. */
 export const detail = async (slug: string): Promise<KaaShow> =>
   kaaRequest<KaaShow>(`/api/show/${slug}`);
