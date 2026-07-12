@@ -21,6 +21,8 @@ import topSearchController from '../controllers/topSearch.controller';
 import episodeServersController from '../controllers/episodeServers.controller';
 import episodeSourcesController from '../controllers/episodeSources.controller';
 import skipTimesController from '../controllers/skipTimes.controller';
+import enmaServersController from '../controllers/enmaServers.controller';
+import enmaStreamController from '../controllers/enmaStream.controller';
 import proxyController from '../controllers/proxy.controller';
 import {
   mangaHomeController,
@@ -56,6 +58,11 @@ router.get('/episodes/:id', handler(episodesController));
 router.get('/episode/servers', handler(episodeServersController));
 router.get('/episode/sources', handler(episodeSourcesController));
 router.get('/episode/skip-times', handler(skipTimesController));
+
+// enma.lol — secondary source with many sub/dub iframe-embed servers.
+router.get('/enma/servers/:anilistId', handler(enmaServersController));
+router.get('/enma/stream/:anilistId', handler(enmaStreamController));
+
 router.get('/proxy', proxyController);
 router.get('/genres', handler(allGenresController));
 
