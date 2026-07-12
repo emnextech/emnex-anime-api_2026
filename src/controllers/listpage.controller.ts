@@ -48,6 +48,13 @@ const listpageController = async (c: Context): Promise<ListPageResponse> => {
     return kaa.toListPage(result, page, totalPages);
   }
 
+  // Latest episodes / recently updated → the real "recent" feed (newest first).
+  if (query === 'recently-updated' || query === 'recently-added') {
+    const { result, hasNext } = await kaa.recent(page);
+    if (result.length < 1) throw new NotFoundError();
+    return kaa.toListPage(result, page, hasNext ? page + 1 : page);
+  }
+
   const { result, totalPages } = popularQueries.has(query)
     ? await kaa.popular(page)
     : await kaa.catalogue(page);

@@ -36,6 +36,7 @@ interface KaaShow {
   genres?: string[];
   locales?: string[];
   episode_duration?: number;
+  episode_number?: number; // present on /api/show/recent — the latest episode
   start_date?: string;
   end_date?: string;
   poster?: KaaImage;
@@ -168,7 +169,7 @@ export const mapShow = (show: KaaShow): ListPageAnime => ({
   episodes: {
     sub: hasLocale(show, 'ja-JP') ? 1 : null,
     dub: hasLocale(show, 'en-US') ? 1 : null,
-    eps: null,
+    eps: show.episode_number ?? null,
   },
   type: show.type ? show.type.toUpperCase() : null,
   duration: toDuration(show.episode_duration),
@@ -209,6 +210,31 @@ export const catalogue = async (
 ): Promise<{ result: KaaShow[]; totalPages: number }> => {
   const data = await kaaRequest<{ result: KaaShow[]; maxPage: number }>(`/api/anime?page=${page}`);
   return { result: data.result || [], totalPages: data.maxPage || 1 };
+};
+
+/**
+ * GET /api/show/recent — latest episodes / recently-updated shows, newest first.
+ * Each item carries the latest `episode_number`, so cards can show "EP N".
+ */
+export const recent = async (
+  page: number
+): Promise<{ result: KaaShow[]; hasNext: boolean }> => {
+  const data = await kaaRequest<{ result: KaaShow[]; hadNext?: boolean }>(
+    `/api/show/recent?page=${page}`
+  );
+  return { result: data.result || [], hasNext: Boolean(data.hadNext) };
+};
+
+/** GET /api/show/trending — currently trending shows (single page, ~24). */
+export const trending = async (): Promise<KaaShow[]> => {
+  const data = await kaaRequest<{ result: KaaShow[] }>('/api/show/trending');
+  return data.result || [];
+};
+
+/** GET /api/show/top — top / most-popular shows (single page, ~24). */
+export const top = async (): Promise<KaaShow[]> => {
+  const data = await kaaRequest<{ result: KaaShow[] }>('/api/show/top');
+  return data.result || [];
 };
 
 // ---------------------------------------------------------------------------
