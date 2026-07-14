@@ -23,6 +23,8 @@ import episodeSourcesController from '../controllers/episodeSources.controller';
 import skipTimesController from '../controllers/skipTimes.controller';
 import enmaServersController from '../controllers/enmaServers.controller';
 import enmaStreamController from '../controllers/enmaStream.controller';
+import hianimeServersController from '../controllers/hianimeServers.controller';
+import hianimeSourcesController from '../controllers/hianimeSources.controller';
 import proxyController from '../controllers/proxy.controller';
 import {
   mangaHomeController,
@@ -62,6 +64,10 @@ router.get('/episode/skip-times', handler(skipTimesController));
 // enma.lol — secondary source with many sub/dub iframe-embed servers.
 router.get('/enma/servers/:anilistId', handler(enmaServersController));
 router.get('/enma/stream/:anilistId', handler(enmaStreamController));
+
+// HiAnime — secondary DIRECT (m3u8) source via the aniwatch scraper.
+router.get('/hianime/servers', handler(hianimeServersController));
+router.get('/hianime/sources', handler(hianimeSourcesController));
 
 router.get('/proxy', proxyController);
 router.get('/genres', handler(allGenresController));
