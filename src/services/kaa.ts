@@ -157,23 +157,24 @@ export const bannerUrl = (img?: KaaImage): string | null => {
 const toDuration = (seconds?: number): string | null =>
   seconds ? `${Math.round(seconds / 60)}m` : null;
 
-const hasLocale = (show: KaaShow, locale: string): boolean =>
-  Array.isArray(show.locales) && show.locales.includes(locale);
-
 /** Map a KAA show onto the list/card shape (AnimeFeatured + duration). */
-export const mapShow = (show: KaaShow): ListPageAnime => ({
-  title: show.title_en || show.title || null,
-  alternativeTitle: show.title || show.title_original || null,
-  id: show.slug,
-  poster: imageUrl(show.poster),
-  episodes: {
-    sub: hasLocale(show, 'ja-JP') ? 1 : null,
-    dub: hasLocale(show, 'en-US') ? 1 : null,
-    eps: show.episode_number ?? null,
-  },
-  type: show.type ? show.type.toUpperCase() : null,
-  duration: toDuration(show.episode_duration),
-});
+export const mapShow = (show: KaaShow): ListPageAnime => {
+  // KAA's list feeds (popular/top/trending/search) omit `locales`, which would
+  // hide both sub & dub badges. Nearly every title has a Japanese (sub) track, so
+  // assume sub when locale info is absent, and only flag dub when we actually know.
+  const locales = Array.isArray(show.locales) ? show.locales : [];
+  const sub = locales.length === 0 || locales.includes('ja-JP') ? 1 : null;
+  const dub = locales.includes('en-US') ? 1 : null;
+  return {
+    title: show.title_en || show.title || null,
+    alternativeTitle: show.title || show.title_original || null,
+    id: show.slug,
+    poster: imageUrl(show.poster),
+    episodes: { sub, dub, eps: show.episode_number ?? null },
+    type: show.type ? show.type.toUpperCase() : null,
+    duration: toDuration(show.episode_duration),
+  };
+};
 
 const emptyTop10 = { today: [] as TrendingAnime[], week: [] as TrendingAnime[], month: [] as TrendingAnime[] };
 
@@ -402,8 +403,9 @@ export const toListPage = (
 
 /** Map a KAA detail payload onto the DetailAnime shape. */
 export const mapDetail = (show: KaaShow, epList: KaaEpisode[]): DetailAnime => {
-  const subEps = hasLocale(show, 'ja-JP') ? epList.length : null;
-  const dubEps = hasLocale(show, 'en-US') ? epList.length : null;
+  const locales = Array.isArray(show.locales) ? show.locales : [];
+  const subEps = locales.length === 0 || locales.includes('ja-JP') ? epList.length : null;
+  const dubEps = locales.includes('en-US') ? epList.length : null;
   return {
     title: show.title_en || show.title || null,
     alternativeTitle: show.title || null,
